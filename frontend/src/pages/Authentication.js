@@ -1,4 +1,4 @@
-import { redirect } from "react-router-dom";
+import { json, redirect } from "react-router-dom";
 
 import AuthForm from "../components/AuthForm";
 
@@ -9,13 +9,11 @@ function AuthenticationPage() {
 export default AuthenticationPage;
 
 export async function action({ request }) {
-  //".searchParams" we extract all query params ( after "?" and "&" symbol)
   const searchParams = new URL(request.url).searchParams;
-  //here we extract exactly one param
   const mode = searchParams.get("mode") || "login";
 
   if (mode !== "login" && mode !== "signup") {
-    throw Response({ message: "Unsupported mode." }, { status: 422 });
+    throw json({ message: "Unsupported mode." }, { status: 422 });
   }
 
   const data = await request.formData();
@@ -37,12 +35,13 @@ export async function action({ request }) {
   }
 
   if (!response.ok) {
-    throw new Response(
-      { message: "Could not authenticate user." },
-      { status: 500 }
-    );
+    throw json({ message: "Could not authenticate user." }, { status: 500 });
   }
 
-  // soon: manage that token
+  const resData = await response.json();
+  const token = resData.token;
+
+  localStorage.setItem("token", token);
+
   return redirect("/");
 }
